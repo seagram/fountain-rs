@@ -45,6 +45,6 @@ struct TitlePage {
 }
 
 struct Script {
-    title_page: TitlePage,
+    title_page: Optional<TitlePage>,
     elements: Vec<Elements>,
 }
