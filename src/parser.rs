@@ -25,7 +25,8 @@
  *  dialogue.
  */
 
-mod types;
-use types::Script;
+use crate::types::Script;
 
-pub fn parse(input: String) -> Script {}
+pub fn parse(input: String) -> Script {
+    !todo!()
+}
