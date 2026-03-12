@@ -35,7 +35,7 @@ fn normalize_input(mut input: String) -> String {
     // Add two trailing newlines to input
     input.push_str("\n\n");
 
-    return input;
+    input
 }
 
 fn title_page_exists(input: String) -> bool {
@@ -48,6 +48,17 @@ fn parse_title_page(input: String) -> TitlePage {
     !todo!()
 }
 
-pub fn parse_script(input: String) -> Script {
+pub fn parse_script(mut input: String) -> Script {
+    let mut script = Script {
+        title_page: None,
+        elements: Vec::new(),
+    };
+
+    input = normalize_input(input);
+
+    if title_page_exists(input.clone()) {
+        script.title_page = Some(parse_title_page(input));
+    }
+
     !todo!()
 }
