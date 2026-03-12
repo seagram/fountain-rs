@@ -27,9 +27,15 @@
 
 use crate::types::{Element, Script, TitlePage};
 
-fn clean_input(input: String) -> String {
-    // Trims leading newlines from input
-    !todo!()
+fn normalize_input(mut input: String) -> String {
+    // Trim leading newlines from input
+    input = input.trim_start().to_string();
+    // Normalize lines endings to newline characters
+    input = input.replace("\r\n", "\n").replace("\r", "\n");
+    // Add two trailing newlines to input
+    input.push_str("\n\n");
+
+    return input;
 }
 
 fn title_page_exists(input: String) -> bool {
