@@ -170,6 +170,22 @@ fn parse_page_break(input: String) -> Option<Element> {
     }
 }
 
+fn parse_section(input: String) -> Option<Element> {
+    // Definition:
+    // Any line starting with one or more consectutive '#' characters
+    // The number of '#' characters denotes the section depth
+    // Example: # Act (Depth = 1)
+    //          ## Sequence (Depth = 2)
+    //          ### Scene (Depth = 3)
+
+    let first_word = input.split_whitespace().next()?;
+    if !first_word.chars().all(|c| c == '#') {
+        return None;
+    }
+    let depth = first_word.len() as u32;
+    Some(Element::SectionHeading { text: input, depth })
+}
+
 pub fn parse_script(mut input: String) -> Script {
     let mut script = Script {
         title_page: None,
