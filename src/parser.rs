@@ -25,8 +25,23 @@
  *  dialogue.
  */
 
-use crate::types::Script;
+use crate::types::{Element, Script, TitlePage};
 
-pub fn parse(input: String) -> Script {
+fn clean_input(input: String) -> String {
+    // Trims leading newlines from input
+    !todo!()
+}
+
+fn title_page_exists(input: String) -> bool {
+    // Find the first newline
+    // Check if first lines with content under the first newline define a title page
+    !todo!()
+}
+
+fn parse_title_page(input: String) -> TitlePage {
+    !todo!()
+}
+
+pub fn parse_script(input: String) -> Script {
     !todo!()
 }
