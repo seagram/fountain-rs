@@ -25,7 +25,7 @@
  *  dialogue.
  */
 
-use crate::types::{Script, TitlePage};
+use crate::types::{Element, Script, TitlePage};
 
 fn normalize_input(mut input: String) -> String {
     // Trim leading newlines from input
@@ -105,6 +105,34 @@ pub fn parse_title_page(input: String) -> Option<TitlePage> {
     Some(title_page)
 }
 
+fn parse_forced(mut input: String) -> Option<Element> {
+    // Defintion:
+    // Fountain elements can be "forced" by starting a line with a corresponding character.
+    // While uncommon in practice and is more often utilized by power users, it is still fully
+    // supported in the official fountain spec.
+    // Instead of checking for each of these characters in each seperate element parsing logic, we
+    // can check one, here.
+
+    let first_char = input.chars().next();
+    match first_char {
+        Some('.') => Some(Element::SceneHeading {
+            text: input,
+            scene_number: None, // TODO
+        }),
+        Some('!') => Some(Element::Action {
+            text: input,
+            is_centered: false, // TODO
+        }),
+        Some('@') => Some(Element::Character {
+            name: input,
+            is_dual_dialogue: false, // TODO
+        }),
+        Some('~') => Some(Element::Lyrics { text: input }),
+        Some('>') => Some(Element::Transition { text: input }),
+        _ => None,
+    }
+}
+
 pub fn parse_script(mut input: String) -> Script {
     let mut script = Script {
         title_page: None,
@@ -113,7 +141,19 @@ pub fn parse_script(mut input: String) -> Script {
 
     input = normalize_input(input);
 
-    script.title_page = parse_title_page(input);
+    script.title_page = parse_title_page(input.clone());
+
+    // Discard title page lines, start parsing at beggining of screenplay
+    input = match input.find("\n\n") {
+        Some(position) => input[..position].to_string(),
+        None => input,
+    };
+
+    let input_lines: Vec<String> = input.lines().map(|s| s.to_string()).collect();
+
+    for line in input_lines {
+        todo!()
+    }
 
     todo!()
 }
