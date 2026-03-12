@@ -1,7 +1,7 @@
 /*
- * The following type modeling differs from the original C++ implemenation.
+ * The following type modeling differs from the original Objective-C implemenation.
  *
- * The rust-equivalent of the original C++ implementation is as follows:
+ * The rust-equivalent of the original Objective-C implementation is as follows:
  *
  * enum ElementType {
  *      SceneHeading,
