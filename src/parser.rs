@@ -211,3 +211,25 @@ pub fn parse_script(mut input: String) -> Script {
 
     todo!()
 }
+
+// TODO:
+//
+// - [ ] Scene Headings
+// - [ ] Action
+// - [ ] Character
+// - [ ] Dialogue
+// - [ ] Parenthetical
+// - [ ] Dual-Dialogue
+// - [ ] Lyrics
+// - [ ] Transition
+// - [ ] Centered Text
+// - [ ] Emphasis
+// - [ ] Title Page
+// - [ ] Page Breaks
+// - [ ] Punctuation
+// - [ ] Line Breaks
+// - [ ] Indenting
+// - [ ] Notes
+// - [ ] Boneyard
+// - [ ] Sections and Synopses
+// - [ ] Error Handling
