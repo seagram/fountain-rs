@@ -23,9 +23,6 @@ enum Element {
     Transition {
         text: String,
     },
-    TitlePage {
-        // TODO
-    },
     PageBreak,
     Note {
         text: String,
@@ -40,4 +37,14 @@ enum Element {
     Synopsis {
         text: String,
     },
+}
+
+struct TitlePage {
+    // kv pairs
+    entries: Vec<(String, Vec<String>)>,
+}
+
+struct Script {
+    title_page: TitlePage,
+    elements: Vec<Elements>,
 }
