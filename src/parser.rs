@@ -38,14 +38,65 @@ fn normalize_input(mut input: String) -> String {
     input
 }
 
-fn title_page_exists(input: String) -> bool {
-    // Find the first newline
-    // Check if first lines with content under the first newline define a title page
-    !todo!()
+fn is_title_page_line(line: &str) -> bool {
+    // Title page lines must follow one of two formats:
+    // "Key: Value" (inline)
+    // "Key:" (directive)
+    // Rules:
+    // 1. Line starts with a non-whitespace character
+    // 2. Contains a ':' character after one or more non-':' characters
+    // 3. For inline: has non-whitespace content after ':' and before newline
+    // 4. For directive: has only whitespace/nothing after ':'
+    let first_char = match line.chars().next() {
+        Some(c) => c,
+        None => return false,
+    };
+
+    if first_char.is_whitespace() {
+        return false;
+    };
+
+    let colon_position = match line.find(':') {
+        Some(position) => position,
+        None => return false,
+    };
+
+    // There must be at least one character before the colon character
+    colon_position > 0
 }
 
-fn parse_title_page(input: String) -> TitlePage {
-    !todo!()
+fn parse_title_page(input: String) -> Option<TitlePage> {
+    let mut title_page = TitlePage {
+        entries: Vec::new(),
+    };
+
+    // Title pages must be followed by two newline characters
+    // We parse from the first line of the input to the last line before the double newline
+    let title_page_range = match input.find("\n\n") {
+        Some(position) => &input[..position],
+        None => return None,
+    };
+
+    for line in title_page_range.lines() {
+        if is_title_page_line(line) {
+            let colon_position = line.find(':').unwrap();
+            let after_colon = &line[colon_position + 1..];
+
+            let key = line[..colon_position].to_string();
+
+            if !after_colon.trim().is_empty() {
+                // Line is inline ("Key: Value")
+                let value = after_colon.trim().to_string();
+                title_page.entries.push((key, vec![value]));
+            } else {
+                // Line is directive ("Key:")
+                title_page.entries.push((key, Vec::new()));
+            }
+        } else if !line.trim().is_empty() {
+            break; // not a title page lines or a continuation line
+        }
+    }
+    Some(title_page)
 }
 
 pub fn parse_script(mut input: String) -> Script {
@@ -56,9 +107,7 @@ pub fn parse_script(mut input: String) -> Script {
 
     input = normalize_input(input);
 
-    if title_page_exists(input.clone()) {
-        script.title_page = Some(parse_title_page(input));
-    }
+    script.title_page = parse_title_page(input);
 
-    !todo!()
+    todo!()
 }
