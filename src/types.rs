@@ -71,6 +71,7 @@ pub enum Element {
     },
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct TitlePage {
     // kv pairs
     pub entries: Vec<(String, Vec<String>)>,
