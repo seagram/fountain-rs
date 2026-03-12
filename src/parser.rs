@@ -160,6 +160,16 @@ fn parse_centered_action(mut input: String) -> Option<Element> {
     }
 }
 
+fn parse_page_break(input: String) -> Option<Element> {
+    // Definition:
+    // Any line containing three or more consectutive equals signs and nothing else.
+    // Example: ===, =====, =======
+    match input.chars().all(|c| c == '=') {
+        true => Some(Element::PageBreak),
+        false => None,
+    }
+}
+
 pub fn parse_script(mut input: String) -> Script {
     let mut script = Script {
         title_page: None,
