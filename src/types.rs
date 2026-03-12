@@ -73,10 +73,10 @@ pub enum Element {
 
 pub struct TitlePage {
     // kv pairs
-    entries: Vec<(String, Vec<String>)>,
+    pub entries: Vec<(String, Vec<String>)>,
 }
 
 pub struct Script {
-    title_page: Option<TitlePage>,
-    elements: Vec<Element>,
+    pub title_page: Option<TitlePage>,
+    pub elements: Vec<Element>,
 }
