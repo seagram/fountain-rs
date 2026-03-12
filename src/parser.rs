@@ -206,10 +206,22 @@ pub fn parse_script(mut input: String) -> Script {
     let input_lines: Vec<String> = input.lines().map(|s| s.to_string()).collect();
 
     for line in input_lines {
-        todo!()
-    }
+        // Skip empty lines
+        if line.trim().is_empty() {
+            continue;
+        }
 
-    todo!()
+        // Try each parser in priority order, using the first match
+        let element = parse_page_break(line.clone())
+            .or_else(|| parse_section(line.clone()))
+            .or_else(|| parse_centered_action(line.clone()))
+            .or_else(|| parse_forced(line.clone()));
+
+        if element.is_some() {
+            script.elements.push(element.unwrap());
+        }
+    }
+    script
 }
 
 // TODO:
@@ -222,14 +234,15 @@ pub fn parse_script(mut input: String) -> Script {
 // - [ ] Dual-Dialogue
 // - [ ] Lyrics
 // - [ ] Transition
-// - [ ] Centered Text
+// - [x] Centered Text
 // - [ ] Emphasis
-// - [ ] Title Page
-// - [ ] Page Breaks
+// - [x] Title Page
+// - [x] Page Breaks
 // - [ ] Punctuation
 // - [ ] Line Breaks
 // - [ ] Indenting
 // - [ ] Notes
 // - [ ] Boneyard
-// - [ ] Sections and Synopses
+// - [x] Sections
+// - [x] Synopses
 // - [ ] Error Handling
