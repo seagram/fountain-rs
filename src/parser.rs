@@ -25,7 +25,7 @@
  *  dialogue.
  */
 
-use crate::types::{Element, Script, TitlePage};
+use crate::types::{Script, TitlePage};
 
 fn normalize_input(mut input: String) -> String {
     // Trim leading newlines from input
@@ -38,7 +38,7 @@ fn normalize_input(mut input: String) -> String {
     input
 }
 
-fn is_title_page_line(line: &str) -> bool {
+fn is_title_page_key_line(line: &str) -> bool {
     // Title page lines must follow one of two formats:
     // "Key: Value" (inline)
     // "Key:" (directive)
@@ -65,7 +65,7 @@ fn is_title_page_line(line: &str) -> bool {
     colon_position > 0
 }
 
-fn parse_title_page(input: String) -> Option<TitlePage> {
+pub fn parse_title_page(input: String) -> Option<TitlePage> {
     let mut title_page = TitlePage {
         entries: Vec::new(),
     };
@@ -78,7 +78,7 @@ fn parse_title_page(input: String) -> Option<TitlePage> {
     };
 
     for line in title_page_range.lines() {
-        if is_title_page_line(line) {
+        if is_title_page_key_line(line) {
             let colon_position = line.find(':').unwrap();
             let after_colon = &line[colon_position + 1..];
 
@@ -92,8 +92,14 @@ fn parse_title_page(input: String) -> Option<TitlePage> {
                 // Line is directive ("Key:")
                 title_page.entries.push((key, Vec::new()));
             }
+        } else if line.starts_with('\t') || line.starts_with(' ') {
+            // If the line starts with a whitespace character and does not contain a ':'
+            // It is considered a continuation line whose contents are appended to the last key's value vector
+            if let Some((_, values)) = title_page.entries.last_mut() {
+                values.push(line.trim().to_string())
+            }
         } else if !line.trim().is_empty() {
-            break; // not a title page lines or a continuation line
+            break; // not a title page line or a continuation line
         }
     }
     Some(title_page)
