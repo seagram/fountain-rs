@@ -24,3 +24,8 @@
  *  dialogue is being appended. RFP removes this; there is a single implementation for appending
  *  dialogue.
  */
+
+mod types;
+use types::Script;
+
+pub fn parse(input: String) -> Script {}

@@ -30,7 +30,7 @@
  * This means each enum variant only contains fields applicable to them.
  */
 
-enum Element {
+pub enum Element {
     SceneHeading {
         text: String,
         scene_number: Option<String>,
@@ -71,12 +71,12 @@ enum Element {
     },
 }
 
-struct TitlePage {
+pub struct TitlePage {
     // kv pairs
     entries: Vec<(String, Vec<String>)>,
 }
 
-struct Script {
-    title_page: Optional<TitlePage>,
-    elements: Vec<Elements>,
+pub struct Script {
+    title_page: Option<TitlePage>,
+    elements: Vec<Element>,
 }
