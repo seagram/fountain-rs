@@ -105,7 +105,7 @@ pub fn parse_title_page(input: String) -> Option<TitlePage> {
     Some(title_page)
 }
 
-fn parse_forced(mut input: String) -> Option<Element> {
+fn parse_forced(input: String) -> Option<Element> {
     // Defintion:
     // Fountain elements can be "forced" by starting a line with a corresponding character.
     // While uncommon in practice and is more often utilized by power users, it is still fully
@@ -129,6 +129,33 @@ fn parse_forced(mut input: String) -> Option<Element> {
         }),
         Some('~') => Some(Element::Lyrics { text: input }),
         Some('>') => Some(Element::Transition { text: input }),
+        _ => None,
+    }
+}
+
+fn parse_centered_action(mut input: String) -> Option<Element> {
+    // Defintion:
+    // Defined as any line that starts with a '>' character and ends with a '<' character
+    // Example: >THE END<
+    // Leading spaces are stripped when parsing but are allowed syntatically.
+    // Example: >   THE END   < is parsed to >THE END<
+    let first_char = input.chars().next();
+    let last_char = input.chars().last();
+
+    match (first_char, last_char) {
+        (Some('>'), Some('<')) => {
+            // Strip arrow characters, leading and trailing whitespace
+            let stripped_input = input
+                .trim_start_matches('>')
+                .trim_start()
+                .trim_end_matches('<')
+                .trim_end()
+                .to_string();
+            Some(Element::Action {
+                text: stripped_input,
+                is_centered: true,
+            })
+        }
         _ => None,
     }
 }
