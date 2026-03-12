@@ -129,6 +129,7 @@ fn parse_forced(input: String) -> Option<Element> {
         }),
         Some('~') => Some(Element::Lyrics { text: input }),
         Some('>') => Some(Element::Transition { text: input }),
+        Some('=') => Some(Element::Synopsis { text: input }),
         _ => None,
     }
 }
