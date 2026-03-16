@@ -134,7 +134,7 @@ fn parse_forced(input: String) -> Option<Element> {
     }
 }
 
-fn parse_centered_action(mut input: String) -> Option<Element> {
+fn parse_centered_action(input: String) -> Option<Element> {
     // Defintion:
     // Defined as any line that starts with a '>' character and ends with a '<' character
     // Example: >THE END<
