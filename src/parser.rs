@@ -105,6 +105,26 @@ pub fn parse_title_page(input: String) -> Option<TitlePage> {
     Some(title_page)
 }
 
+fn parse_scene_number(input: String) -> Option<String> {
+    // Helper function for parsing SceneHeadings
+    // Used for parse_scene_heading and parse_forced
+    // Checks if a scene_heading contains a scene_number
+    // Defintion:
+    // Any alphanumerics (including dashes and periods), wrapped in '#'.
+    // Must be appended at the end of the scene heading
+    let last_word = input.split_whitespace().last()?;
+    let first_char = last_word.chars().next()?;
+    let last_char = last_word.chars().last()?;
+
+    match (first_char, last_char) {
+        ('#', '#') => {
+            let scene_number = last_word.trim_matches('#').to_string();
+            Some(scene_number)
+        }
+        _ => None,
+    }
+}
+
 fn parse_forced(input: String) -> Option<Element> {
     // Defintion:
     // Fountain elements can be "forced" by starting a line with a corresponding character.
@@ -112,26 +132,27 @@ fn parse_forced(input: String) -> Option<Element> {
     // supported in the official fountain spec.
     // Instead of checking for each of these characters in each seperate element parsing logic, we
     // can check one, here.
-    //
-    // TODO: Strip forced character from output
 
     let first_char = input.chars().next();
+    // Forced character must be stripped from output
+    let text = input[1..].to_string();
+
     match first_char {
         Some('.') => Some(Element::SceneHeading {
-            text: input,
-            scene_number: None, // TODO
+            scene_number: parse_scene_number(text.clone()),
+            text,
         }),
         Some('!') => Some(Element::Action {
-            text: input,
+            text,
             is_centered: false, // TODO
         }),
         Some('@') => Some(Element::Character {
-            name: input,
+            name: text,
             is_dual_dialogue: false, // TODO
         }),
-        Some('~') => Some(Element::Lyrics { text: input }),
-        Some('>') => Some(Element::Transition { text: input }),
-        Some('=') => Some(Element::Synopsis { text: input }),
+        Some('~') => Some(Element::Lyrics { text }),
+        Some('>') => Some(Element::Transition { text }),
+        Some('=') => Some(Element::Synopsis { text }),
         _ => None,
     }
 }
