@@ -140,11 +140,21 @@ fn parse_scene_heading(input: String) -> Option<Element> {
     // Definition:
     // Any line that is follwed by a blank line
     // Must begin with valid scene heading (see below)
-    // Can be forced by starting the line with '.'
-    // Note: '.' character must be stripped from output
     // Note: valid_scene_headings are case-insensitive (ex. 'ext' and 'int' are valid)
-    let valid_scene_headings = vec!["INT", "EXT", "EST", "INT./EXT", "INT/EXT", "I/E"];
-    todo!();
+    const VALID_SCENE_HEADINGS: &[&str] =
+        &["INT.", "EXT.", "EST.", "INT./EXT.", "INT/EXT.", "I/E."];
+    let first_word_uppercase = input.split_whitespace().next()?.to_uppercase();
+
+    if !VALID_SCENE_HEADINGS.contains(&first_word_uppercase.as_str()) {
+        return None;
+    }
+
+    Some(Element::SceneHeading {
+        text: input,
+        scene_number: None,
+    })
+
+    // TODO: Check for scene numbers wrapped in # at end of line
 }
 
 fn parse_centered_action(input: String) -> Option<Element> {
@@ -226,6 +236,7 @@ pub fn parse_script(mut input: String) -> Script {
 
         // Define parsers in priority order
         let parsers: &[fn(String) -> Option<Element>] = &[
+            parse_scene_heading,
             parse_page_break,
             parse_section,
             parse_centered_action,
