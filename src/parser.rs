@@ -112,6 +112,8 @@ fn parse_forced(input: String) -> Option<Element> {
     // supported in the official fountain spec.
     // Instead of checking for each of these characters in each seperate element parsing logic, we
     // can check one, here.
+    //
+    // TODO: Strip forced character from output
 
     let first_char = input.chars().next();
     match first_char {
@@ -132,6 +134,17 @@ fn parse_forced(input: String) -> Option<Element> {
         Some('=') => Some(Element::Synopsis { text: input }),
         _ => None,
     }
+}
+
+fn parse_scene_heading(input: String) -> Option<Element> {
+    // Definition:
+    // Any line that is follwed by a blank line
+    // Must begin with valid scene heading (see below)
+    // Can be forced by starting the line with '.'
+    // Note: '.' character must be stripped from output
+    // Note: valid_scene_headings are case-insensitive (ex. 'ext' and 'int' are valid)
+    let valid_scene_headings = vec!["INT", "EXT", "EST", "INT./EXT", "INT/EXT", "I/E"];
+    todo!();
 }
 
 fn parse_centered_action(input: String) -> Option<Element> {
@@ -211,14 +224,18 @@ pub fn parse_script(mut input: String) -> Script {
             continue;
         }
 
-        // Try each parser in priority order, using the first match
-        let element = parse_page_break(line.clone())
-            .or_else(|| parse_section(line.clone()))
-            .or_else(|| parse_centered_action(line.clone()))
-            .or_else(|| parse_forced(line.clone()));
+        // Define parsers in priority order
+        let parsers: &[fn(String) -> Option<Element>] = &[
+            parse_page_break,
+            parse_section,
+            parse_centered_action,
+            parse_forced,
+        ];
 
-        if element.is_some() {
-            script.elements.push(element.unwrap());
+        // Try each parser in priority order, return first successul result
+        let element = parsers.iter().find_map(|f| f(line.clone()));
+        if let Some(e) = element {
+            script.elements.push(e);
         }
     }
     script
