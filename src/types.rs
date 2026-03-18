@@ -88,4 +88,5 @@ pub struct ParserState {
     pub prev_line: String,
     pub curr_line: String,
     pub next_line: String,
+    pub script_lines: Vec<String>,
 }

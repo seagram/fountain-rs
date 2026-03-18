@@ -315,17 +315,20 @@ fn parse_character(input: String, state: &ParserState) -> Option<Element> {
     // TODO: Add support for Character Extensions
 }
 
+fn parse_boneyard(input: String) -> Option<Vec<Element>> {
+    // NOTE: This returns all the boneyard elements in a screenplay at once.
+    // Unlike the other element parsers, all boneyards at parsed at the start of parsing.
+    // Boneyards are ignored in formatted ouput but a still parsed for flexibility
+    // Here, input refers to the entire screenplay, passed as a string
+    // Definition:
+    // (a) Any text wrapped in '/*' and '*/'
+    todo!();
+}
+
 pub fn parse_script(mut input: String) -> Script {
     let mut script = Script {
         title_page: None,
         elements: Vec::new(),
-    };
-
-    let mut state = ParserState {
-        last_element: None,
-        prev_line: String::new(),
-        curr_line: String::new(),
-        next_line: String::new(),
     };
 
     input = normalize_input(input);
@@ -338,11 +341,18 @@ pub fn parse_script(mut input: String) -> Script {
         None => input,
     };
 
-    let input_lines: Vec<String> = input.lines().map(|s| s.to_string()).collect();
+    let mut state = ParserState {
+        last_element: None,
+        prev_line: String::new(),
+        curr_line: String::new(),
+        next_line: String::new(),
+        script_lines: input.lines().map(|s| s.to_string()).collect(),
+    };
 
-    for line in input_lines {
+    for line in &state.script_lines {
         // Skip empty lines
         if line.trim().is_empty() {
+            state.prev_line = line.to_string();
             continue;
         }
 
@@ -366,6 +376,7 @@ pub fn parse_script(mut input: String) -> Script {
                 .iter()
                 .find_map(|f| f(line.clone(), &state))
         });
+
         if let Some(e) = element {
             state.last_element = Some(e.clone());
             script.elements.push(e);
@@ -388,7 +399,6 @@ pub fn parse_script(mut input: String) -> Script {
 // - [ ] Emphasis
 // - [x] Title Page
 // - [x] Page Breaks
-// - [ ] Punctuation
 // - [ ] Line Breaks
 // - [ ] Indenting
 // - [ ] Notes
