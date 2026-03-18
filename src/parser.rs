@@ -253,6 +253,26 @@ fn parse_transition(input: String) -> Option<Element> {
     }
 }
 
+fn parse_parenthetical(input: String) -> Option<Element> {
+    // Definition:
+    // (a) Follows a Character or Dialogue element
+    // (b) Wrapped in parentheses
+
+    // let follows_character_or_dialogue = todo!(); // (a)
+    let wrapped_in_parentheses = (input.chars().next()?, input.chars().last()?) == ('(', ')'); // (b)
+
+    match wrapped_in_parentheses {
+        true => {
+            let inside_paren = input
+                .strip_prefix('(')
+                .and_then(|s| s.strip_suffix(')'))?
+                .to_string();
+            Some(Element::Parenthetical { text: inside_paren })
+        }
+        _ => None,
+    }
+}
+
 pub fn parse_script(mut input: String) -> Script {
     let mut script = Script {
         title_page: None,
@@ -282,6 +302,7 @@ pub fn parse_script(mut input: String) -> Script {
             parse_scene_heading,
             parse_transition,
             parse_page_break,
+            parse_parenthetical,
             parse_section,
             parse_centered_action,
             parse_forced,
@@ -302,10 +323,10 @@ pub fn parse_script(mut input: String) -> Script {
 // - [ ] Action
 // - [ ] Character
 // - [ ] Dialogue
-// - [ ] Parenthetical
+// - [x] Parenthetical
 // - [ ] Dual-Dialogue
 // - [x] Lyrics
-// - [ ] Transition
+// - [x] Transition
 // - [x] Centered Text
 // - [ ] Emphasis
 // - [x] Title Page
