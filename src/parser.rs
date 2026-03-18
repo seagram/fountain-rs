@@ -286,13 +286,42 @@ fn parse_dialogue(input: String, state: &ParserState) -> Option<Element> {
     }
 }
 
+fn parse_character(input: String, state: &ParserState) -> Option<Element> {
+    // Definition:
+    // (a) Any line that is entirely uppercase
+    // (b) has one empty line before it
+    // (c) has a non-empty line after it
+    let all_uppercase: bool = input
+        .chars()
+        .all(|c| !c.is_alphanumeric() || c.is_uppercase()); // (a)
+    let has_empty_line_before: bool = state.prev_line.is_empty(); // (b)
+    let has_non_empty_line_after: bool = !state.next_line.is_empty(); // (c)
+
+    match (
+        all_uppercase,
+        has_empty_line_before,
+        has_non_empty_line_after,
+    ) {
+        (true, true, true) => Some(Element::Character {
+            name: input,
+            is_dual_dialogue: false, // TODO
+        }),
+        _ => None,
+    }
+}
+
 pub fn parse_script(mut input: String) -> Script {
     let mut script = Script {
         title_page: None,
         elements: Vec::new(),
     };
 
-    let mut state = ParserState { last_element: None };
+    let mut state = ParserState {
+        last_element: None,
+        prev_line: String::new(),
+        curr_line: String::new(),
+        next_line: String::new(),
+    };
 
     input = normalize_input(input);
 
@@ -323,7 +352,8 @@ pub fn parse_script(mut input: String) -> Script {
             parse_forced,
         ];
 
-        let stateful_parsers: &[fn(String, &ParserState) -> Option<Element>] = &[parse_dialogue];
+        let stateful_parsers: &[fn(String, &ParserState) -> Option<Element>] =
+            &[parse_dialogue, parse_character];
 
         // Try each parser in priority order, return first successul result
         let element = parsers.iter().find_map(|f| f(line.clone())).or_else(|| {
@@ -344,7 +374,7 @@ pub fn parse_script(mut input: String) -> Script {
 // - [ ] Scene Headings
 // - [ ] Action
 // - [ ] Character
-// - [ ] Dialogue
+// - [x] Dialogue
 // - [x] Parenthetical
 // - [ ] Dual-Dialogue
 // - [x] Lyrics

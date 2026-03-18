@@ -85,4 +85,7 @@ pub struct Script {
 
 pub struct ParserState {
     pub last_element: Option<Element>,
+    pub prev_line: String,
+    pub curr_line: String,
+    pub next_line: String,
 }
