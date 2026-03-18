@@ -291,23 +291,28 @@ fn parse_character(input: String, state: &ParserState) -> Option<Element> {
     // (a) Any line that is entirely uppercase
     // (b) has one empty line before it
     // (c) has a non-empty line after it
+    // (d) Includes at least one alphabetical character
     let all_uppercase: bool = input
         .chars()
         .all(|c| !c.is_alphanumeric() || c.is_uppercase()); // (a)
     let has_empty_line_before: bool = state.prev_line.is_empty(); // (b)
     let has_non_empty_line_after: bool = !state.next_line.is_empty(); // (c)
+    let contains_alphabetical_char: bool = input.contains(|c: char| c.is_alphabetic());
 
     match (
         all_uppercase,
         has_empty_line_before,
         has_non_empty_line_after,
+        contains_alphabetical_char,
     ) {
-        (true, true, true) => Some(Element::Character {
+        (true, true, true, true) => Some(Element::Character {
             name: input,
             is_dual_dialogue: false, // TODO
         }),
         _ => None,
     }
+
+    // TODO: Add support for Character Extensions
 }
 
 pub fn parse_script(mut input: String) -> Script {
@@ -371,9 +376,9 @@ pub fn parse_script(mut input: String) -> Script {
 
 // TODO:
 //
-// - [ ] Scene Headings
+// - [x] Scene Headings
 // - [ ] Action
-// - [ ] Character
+// - [x] Character
 // - [x] Dialogue
 // - [x] Parenthetical
 // - [ ] Dual-Dialogue
