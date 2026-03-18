@@ -25,7 +25,7 @@
  *  dialogue.
  */
 
-use crate::types::{Element, Script, TitlePage};
+use crate::types::{Element, ParserState, Script, TitlePage};
 
 // Helper functions
 
@@ -273,11 +273,26 @@ fn parse_parenthetical(input: String) -> Option<Element> {
     }
 }
 
+fn parse_dialogue(input: String, state: &ParserState) -> Option<Element> {
+    // Definition:
+    // (a) Any text following a Character or Parenthetical element
+    // NOTE: manual line breaks are allowed. See Line Breaks for more.
+
+    match state.last_element {
+        Some(Element::Character { .. } | Element::Parenthetical { .. }) => {
+            Some(Element::Dialogue { text: input })
+        }
+        _ => None,
+    }
+}
+
 pub fn parse_script(mut input: String) -> Script {
     let mut script = Script {
         title_page: None,
         elements: Vec::new(),
     };
+
+    let mut state = ParserState { last_element: None };
 
     input = normalize_input(input);
 
@@ -308,9 +323,16 @@ pub fn parse_script(mut input: String) -> Script {
             parse_forced,
         ];
 
+        let stateful_parsers: &[fn(String, &ParserState) -> Option<Element>] = &[parse_dialogue];
+
         // Try each parser in priority order, return first successul result
-        let element = parsers.iter().find_map(|f| f(line.clone()));
+        let element = parsers.iter().find_map(|f| f(line.clone())).or_else(|| {
+            stateful_parsers
+                .iter()
+                .find_map(|f| f(line.clone(), &state))
+        });
         if let Some(e) = element {
+            state.last_element = Some(e.clone());
             script.elements.push(e);
         }
     }

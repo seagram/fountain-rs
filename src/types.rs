@@ -30,6 +30,7 @@
  * This means each enum variant only contains fields applicable to them.
  */
 
+#[derive(Clone)]
 pub enum Element {
     SceneHeading {
         text: String,
@@ -80,4 +81,8 @@ pub struct TitlePage {
 pub struct Script {
     pub title_page: Option<TitlePage>,
     pub elements: Vec<Element>,
+}
+
+pub struct ParserState {
+    pub last_element: Option<Element>,
 }
