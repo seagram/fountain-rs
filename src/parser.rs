@@ -27,6 +27,8 @@
 
 use crate::types::{Element, Script, TitlePage};
 
+// Helper functions
+
 fn normalize_input(mut input: String) -> String {
     // Trim leading newlines from input
     input = input.trim_start().to_string();
@@ -64,6 +66,8 @@ fn is_title_page_key_line(line: &str) -> bool {
     // There must be at least one character before the colon character
     colon_position > 0
 }
+
+// Element parsers
 
 pub fn parse_title_page(input: String) -> Option<TitlePage> {
     let mut title_page = TitlePage {
@@ -231,6 +235,24 @@ fn parse_section(input: String) -> Option<Element> {
     Some(Element::SectionHeading { text: input, depth })
 }
 
+fn parse_transition(input: String) -> Option<Element> {
+    // Definition:
+    // (a) Must be uppercase
+    // (b) Ends in 'TO:' (Ex. "CUT TO:", "FLASHBACK TO:", etc.)
+    // (c) Preceded and followed by an empty line
+
+    let all_uppercase = input
+        .chars()
+        .all(|c| !c.is_alphanumeric() || c.is_uppercase()); // (a)
+    let ends_in_to = input.split_whitespace().last().unwrap() == "TO:"; // (b)
+    // let empty_line_before_and_after = todo!(); // (c)
+
+    match (all_uppercase, ends_in_to) {
+        (true, true) => Some(Element::Transition { text: input }),
+        _ => None,
+    }
+}
+
 pub fn parse_script(mut input: String) -> Script {
     let mut script = Script {
         title_page: None,
@@ -258,6 +280,7 @@ pub fn parse_script(mut input: String) -> Script {
         // Define parsers in priority order
         let parsers: &[fn(String) -> Option<Element>] = &[
             parse_scene_heading,
+            parse_transition,
             parse_page_break,
             parse_section,
             parse_centered_action,
@@ -281,7 +304,7 @@ pub fn parse_script(mut input: String) -> Script {
 // - [ ] Dialogue
 // - [ ] Parenthetical
 // - [ ] Dual-Dialogue
-// - [ ] Lyrics
+// - [x] Lyrics
 // - [ ] Transition
 // - [x] Centered Text
 // - [ ] Emphasis
