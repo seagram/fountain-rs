@@ -172,10 +172,9 @@ fn parse_scene_heading(input: String) -> Option<Element> {
 
 fn parse_centered_action(input: String) -> Option<Element> {
     // Defintion:
-    // Defined as any line that starts with a '>' character and ends with a '<' character
-    // Example: >THE END<
-    // Leading spaces are stripped when parsing but are allowed syntatically.
-    // Example: >   THE END   < is parsed to >THE END<
+    // (a) Any line starting with '>' and ending with '<'. Example: '>THE END<'
+    // (b) Leading spaces are stripped when parsing but are allowed syntatically.
+    //     Example: >   THE END   < is parsed to >THE END<
     let first_char = input.chars().next();
     let last_char = input.chars().last();
 
@@ -184,9 +183,8 @@ fn parse_centered_action(input: String) -> Option<Element> {
             // Strip arrow characters, leading and trailing whitespace
             let stripped_input = input
                 .trim_start_matches('>')
-                .trim_start()
                 .trim_end_matches('<')
-                .trim_end()
+                .trim()
                 .to_string();
             Some(Element::Action {
                 text: stripped_input,
