@@ -152,9 +152,10 @@ fn parse_forced(input: String) -> Option<Element> {
 
 fn parse_scene_heading(input: String) -> Option<Element> {
     // Definition:
-    // Any line that is follwed by a blank line
-    // Must begin with valid scene heading (see below)
+    // (a) Any line that is followed by a blank line
+    // (b) Must begin with valid scene heading (see below)
     // Note: valid_scene_headings are case-insensitive (ex. 'ext' and 'int' are valid)
+
     const VALID_SCENE_HEADINGS: &[&str] =
         &["INT.", "EXT.", "EST.", "INT./EXT.", "INT/EXT.", "I/E."];
     let first_word_uppercase = input.split_whitespace().next()?.to_uppercase();
@@ -164,11 +165,9 @@ fn parse_scene_heading(input: String) -> Option<Element> {
     }
 
     Some(Element::SceneHeading {
+        scene_number: parse_scene_number(input.clone()),
         text: input,
-        scene_number: None,
     })
-
-    // TODO: Check for scene numbers wrapped in # at end of line
 }
 
 fn parse_centered_action(input: String) -> Option<Element> {
