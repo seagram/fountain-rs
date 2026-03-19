@@ -41,30 +41,19 @@ fn normalize_input(mut input: String) -> String {
 }
 
 fn is_title_page_key_line(line: &str) -> bool {
-    // Title page lines must follow one of two formats:
-    // "Key: Value" (inline)
-    // "Key:" (directive)
-    // Rules:
-    // 1. Line starts with a non-whitespace character
-    // 2. Contains a ':' character after one or more non-':' characters
-    // 3. For inline: has non-whitespace content after ':' and before newline
-    // 4. For directive: has only whitespace/nothing after ':'
-    let first_char = match line.chars().next() {
-        Some(c) => c,
-        None => return false,
-    };
+    // Definition:
+    // (a) Line starts with a non-whitespace character
+    // (b) Contains a ':' character after one or more non-':' characters
+    // (c) Inline ("Key: Value") has non-whitespace content after ':' and before newline
+    // (d) Directive ("Key:") has only whitespace/nothing after ':'
 
-    if first_char.is_whitespace() {
-        return false;
-    };
+    let starts_with_non_whitespace_char = !line.chars().next().unwrap().is_whitespace(); // (a)
+    let contains_colon_after_char = line.find(':').unwrap() > 0;
 
-    let colon_position = match line.find(':') {
-        Some(position) => position,
-        None => return false,
-    };
-
-    // There must be at least one character before the colon character
-    colon_position > 0
+    match (starts_with_non_whitespace_char, contains_colon_after_char) {
+        (true, true) => true,
+        _ => false,
+    }
 }
 
 // Element parsers
