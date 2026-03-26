@@ -1,4 +1,4 @@
-use fountain_rs::{parser, types::TitlePage};
+use fountain_core::{parser, types::TitlePage};
 
 fn entry(key: &str, values: &[&str]) -> (String, Vec<String>) {
     (

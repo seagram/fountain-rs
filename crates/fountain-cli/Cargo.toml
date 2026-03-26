@@ -1,0 +1,8 @@
+[package]
+name = "fountain-cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+fountain-core = { path = "../fountain-core" }
+fountain-render = { path = "../fountain-render" }
