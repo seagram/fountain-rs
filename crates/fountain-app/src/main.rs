@@ -1,3 +1,5 @@
+use leptos::prelude::*;
+
 fn main() {
-    // TODO
+    leptos::mount::mount_to_body(|| view! { <p>"fountain-rs"</p> })
 }

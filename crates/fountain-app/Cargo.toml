@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 fountain-core = { path = "../fountain-core" }
 fountain-render = { path = "../fountain-render" }
+leptos = { version = "0.8.17", features = ["csr"] }
