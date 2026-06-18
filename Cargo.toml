@@ -1,8 +1,6 @@
-[workspace]
-members = [
-    "crates/fountain-core",
-    "crates/fountain-cli",
-    "crates/fountain-render",
-    "crates/fountain-app",
-]
-resolver = "3"
+[package]
+name = "fountain-core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]

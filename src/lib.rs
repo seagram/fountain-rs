@@ -1,4 +1,97 @@
 /*
+ * The following type modeling differs from the original Objective-C implemenation.
+ *
+ * The rust-equivalent of the original Objective-C implementation is as follows:
+ *
+ * enum ElementType {
+ *      SceneHeading,
+ *      Action
+ *      Character,
+ *      (etc.)
+ * }
+ *
+ * struct Element {
+ *      element_type: ElementType
+ *      text: String,
+ *      is_centered: bool,
+ *      scene_number: Optional<String>
+ *      is_dual_dialogue: bool,
+ *      section_depth: u32
+ * }
+ *
+ * The problem with design is that most Element fields do not apply to most ElementTypes.
+ * For example:
+ * - is_centered is only ever true for certain Action elements.
+ * - is_dual_dialogue is only ever true for certain Dialogue elements.
+ * - scene_number only applies to SceneHeading
+ * - section_number only applies to SceneHeading
+ *
+ * In liue of this apporach, we can used enum variants with named fields.
+ * This means each enum variant only contains fields applicable to them.
+ */
+
+struct Parser {
+    state: State,
+    script: Option<Script>,
+}
+
+struct State {
+    lines: Vec<String>,
+    prev_line: String,
+    curr_line: String,
+    next_line: String,
+    prev_element: Option<Element>,
+}
+
+struct Script {
+    pub elements: Vec<Element>,
+}
+
+enum Element {
+    TitlePage {
+        entries: Vec<(String, Vec<String>)>,
+    },
+    SceneHeading {
+        text: String,
+        scene_number: Option<String>,
+    },
+    Action {
+        text: String,
+        is_centered: bool,
+    },
+    Character {
+        name: String,
+        is_dual_dialogue: bool,
+    },
+    Dialogue {
+        text: String,
+    },
+    Parenthetical {
+        text: String,
+    },
+    Lyrics {
+        text: String,
+    },
+    Transition {
+        text: String,
+    },
+    PageBreak,
+    Note {
+        text: String,
+    },
+    Boneyard {
+        text: String,
+    },
+    SectionHeading {
+        text: String,
+        depth: u32,
+    },
+    Synopsis {
+        text: String,
+    },
+}
+
+/*
  * Terminology:
  * RFP -> RustFountainParser (this parser)
  * FFP -> FastFountanParser (newest, standard Objective-C parser)
@@ -24,8 +117,6 @@
  *  dialogue is being appended. RFP removes this; there is a single implementation for appending
  *  dialogue.
  */
-
-use crate::types::{Element, ParserState, Script, TitlePage};
 
 // Helper functions
 
@@ -58,10 +149,8 @@ fn is_title_page_key_line(line: &str) -> bool {
 
 // Element parsers
 
-pub fn parse_title_page(input: String) -> Option<TitlePage> {
-    let mut title_page = TitlePage {
-        entries: Vec::new(),
-    };
+pub fn parse_title_page(input: String) -> Option<Element> {
+    let mut entries = Vec::new();
 
     // Title pages must be followed by two newline characters
     // We parse from the first line of the input to the last line before the double newline
@@ -80,22 +169,22 @@ pub fn parse_title_page(input: String) -> Option<TitlePage> {
             if !after_colon.trim().is_empty() {
                 // Line is inline ("Key: Value")
                 let value = after_colon.trim().to_string();
-                title_page.entries.push((key, vec![value]));
+                entries.push((key, vec![value]));
             } else {
                 // Line is directive ("Key:")
-                title_page.entries.push((key, Vec::new()));
+                entries.push((key, Vec::new()));
             }
         } else if line.starts_with('\t') || line.starts_with(' ') {
             // If the line starts with a whitespace character and does not contain a ':'
             // It is considered a continuation line whose contents are appended to the last key's value vector
-            if let Some((_, values)) = title_page.entries.last_mut() {
+            if let Some((_, values)) = entries.last_mut() {
                 values.push(line.trim().to_string())
             }
         } else if !line.trim().is_empty() {
             break; // not a title page line or a continuation line
         }
     }
-    Some(title_page)
+    Some(Element::TitlePage { entries })
 }
 
 fn parse_scene_number(input: String) -> Option<String> {
@@ -139,10 +228,13 @@ fn parse_forced(input: String) -> Option<Element> {
             text,
             is_centered: false, // TODO
         }),
-        Some('@') => Some(Element::Character {
-            name: text,
-            is_dual_dialogue: false, // TODO
-        }),
+        Some('@') => {
+            let is_dual_dialogue: bool = input.chars().last() == Some('^');
+            Some(Element::Character {
+                name: text,
+                is_dual_dialogue,
+            })
+        }
         Some('~') => Some(Element::Lyrics { text }),
         Some('>') => Some(Element::Transition { text }),
         Some('=') => Some(Element::Synopsis { text }),
@@ -199,13 +291,13 @@ fn parse_page_break(input: String) -> Option<Element> {
     // Definition:
     // Any line containing three or more consectutive equals signs and nothing else.
     // Example: ===, =====, =======
-    match input.chars().all(|c| c == '=') {
+    match input.chars().all(|c| c == '=') && input.chars().count() >= 3 {
         true => Some(Element::PageBreak),
         false => None,
     }
 }
 
-fn parse_section(input: String) -> Option<Element> {
+fn parse_section(input: &str) -> Option<Element> {
     // Definition:
     // Any line starting with one or more consectutive '#' characters
     // The number of '#' characters denotes the section depth
@@ -213,12 +305,14 @@ fn parse_section(input: String) -> Option<Element> {
     //          ## Sequence (Depth = 2)
     //          ### Scene (Depth = 3)
 
-    let first_word = input.split_whitespace().next()?;
-    if !first_word.chars().all(|c| c == '#') {
-        return None;
+    let mut start = input.clone().split_whitespace().next()?.chars();
+    match start.all(|c| c == '#') {
+        true => Some(Element::SectionHeading {
+            text: input.to_string(),
+            depth: start.count() as u32,
+        }),
+        false => None,
     }
-    let depth = first_word.len() as u32;
-    Some(Element::SectionHeading { text: input, depth })
 }
 
 fn parse_transition(input: String) -> Option<Element> {
@@ -259,12 +353,12 @@ fn parse_parenthetical(input: String) -> Option<Element> {
     }
 }
 
-fn parse_dialogue(input: String, state: &ParserState) -> Option<Element> {
+fn parse_dialogue(input: String, state: &State) -> Option<Element> {
     // Definition:
     // (a) Any text following a Character or Parenthetical element
     // NOTE: manual line breaks are allowed. See Line Breaks for more.
 
-    match state.last_element {
+    match state.prev_element {
         Some(Element::Character { .. } | Element::Parenthetical { .. }) => {
             Some(Element::Dialogue { text: input })
         }
@@ -272,7 +366,7 @@ fn parse_dialogue(input: String, state: &ParserState) -> Option<Element> {
     }
 }
 
-fn parse_character(input: String, state: &ParserState) -> Option<Element> {
+fn parse_character(input: String, state: &State) -> Option<Element> {
     // Definition:
     // (a) Any line that is entirely uppercase
     // (b) has one empty line before it
@@ -291,10 +385,13 @@ fn parse_character(input: String, state: &ParserState) -> Option<Element> {
         has_non_empty_line_after,
         contains_alphabetical_char,
     ) {
-        (true, true, true, true) => Some(Element::Character {
-            name: input,
-            is_dual_dialogue: false, // TODO
-        }),
+        (true, true, true, true) => {
+            let is_dual_dialogue: bool = input.chars().last() == Some('^');
+            Some(Element::Character {
+                name: input,
+                is_dual_dialogue,
+            })
+        }
         _ => None,
     }
 
@@ -308,67 +405,71 @@ fn parse_boneyard(input: String) -> Option<Vec<Element>> {
     // Here, input refers to the entire screenplay, passed as a string
     // Definition:
     // (a) Any text wrapped in '/*' and '*/'
+    let mut boneyards: Vec<Element> = Vec::new();
+
     todo!();
 }
 
-pub fn parse_script(mut input: String) -> Script {
-    let mut script = Script {
-        title_page: None,
-        elements: Vec::new(),
-    };
+impl Parser {
+    fn parse(mut input: String) -> Script {
+        let mut script = Script {
+            elements: Vec::new(),
+        };
 
-    input = normalize_input(input);
+        input = normalize_input(input);
 
-    script.title_page = parse_title_page(input.clone());
+        // FIX THIS: we only need to check for title page once. At beggining
+        // script.title_page = parse_title_page(input.clone());
 
-    // Discard title page lines, start parsing at beggining of screenplay
-    input = match input.find("\n\n") {
-        Some(position) => input[..position].to_string(),
-        None => input,
-    };
+        // Discard title page lines, start parsing at beggining of screenplay
+        input = match input.find("\n\n") {
+            Some(position) => input[..position].to_string(),
+            None => input,
+        };
 
-    let mut state = ParserState {
-        last_element: None,
-        prev_line: String::new(),
-        curr_line: String::new(),
-        next_line: String::new(),
-        script_lines: input.lines().map(|s| s.to_string()).collect(),
-    };
+        let mut state = State {
+            lines: input.lines().map(|s| s.to_string()).collect(),
+            prev_element: String::new(),
+            prev_line: String::new(),
+            curr_line: String::new(),
+            next_line: String::new(),
+        };
 
-    for line in &state.script_lines {
-        // Skip empty lines
-        if line.trim().is_empty() {
-            state.prev_line = line.to_string();
-            continue;
+        for line in &state.input {
+            // Skip empty lines
+            if line.trim().is_empty() {
+                state.prev_line = line.to_string();
+                continue;
+            }
+
+            // Define parsers in priority order
+            let parsers: &[fn(String) -> Option<Element>] = &[
+                parse_scene_heading,
+                parse_transition,
+                parse_page_break,
+                parse_parenthetical,
+                parse_section,
+                parse_centered_action,
+                parse_forced,
+            ];
+
+            let stateful_parsers: &[fn(String, &ParserState) -> Option<Element>] =
+                &[parse_dialogue, parse_character];
+
+            // Try each parser in priority order, return first successul result
+            let element = parsers.iter().find_map(|f| f(line.clone())).or_else(|| {
+                stateful_parsers
+                    .iter()
+                    .find_map(|f| f(line.clone(), &state))
+            });
+
+            if let Some(e) = element {
+                state.last_element = Some(e.clone());
+                script.elements.push(e);
+            }
         }
-
-        // Define parsers in priority order
-        let parsers: &[fn(String) -> Option<Element>] = &[
-            parse_scene_heading,
-            parse_transition,
-            parse_page_break,
-            parse_parenthetical,
-            parse_section,
-            parse_centered_action,
-            parse_forced,
-        ];
-
-        let stateful_parsers: &[fn(String, &ParserState) -> Option<Element>] =
-            &[parse_dialogue, parse_character];
-
-        // Try each parser in priority order, return first successul result
-        let element = parsers.iter().find_map(|f| f(line.clone())).or_else(|| {
-            stateful_parsers
-                .iter()
-                .find_map(|f| f(line.clone(), &state))
-        });
-
-        if let Some(e) = element {
-            state.last_element = Some(e.clone());
-            script.elements.push(e);
-        }
+        script
     }
-    script
 }
 
 // TODO:
@@ -378,7 +479,7 @@ pub fn parse_script(mut input: String) -> Script {
 // - [x] Character
 // - [x] Dialogue
 // - [x] Parenthetical
-// - [ ] Dual-Dialogue
+// - [x] Dual-Dialogue
 // - [x] Lyrics
 // - [x] Transition
 // - [x] Centered Text
@@ -392,3 +493,4 @@ pub fn parse_script(mut input: String) -> Script {
 // - [x] Sections
 // - [x] Synopses
 // - [ ] Error Handling
+//
